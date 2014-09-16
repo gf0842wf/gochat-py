@@ -76,9 +76,7 @@ class Connection(object):
         data = struct.pack(">I%ds"%length, length, data)
         self.conn.sendall(data)
         
-    
     def recv_data(self):
-        """如果封包方式不同,需要重载这个函数"""
         while True:
             try:
                 # FIXME: 改为makefile接口
@@ -117,7 +115,7 @@ class Connection(object):
         if cmd: cmd(msg)
         
     def cmd_0(self, msg):
-        """握手消息"""
+        """握手"""
         subtype, crypt_key = struct.unpack(">BI", msg)
         if subtype == 1 and crypt_key:
             self.sendall("\x00\x02")
@@ -132,6 +130,10 @@ class Connection(object):
             print "logined."
             
         self.req_4(10001, "ooxx")
+        
+    def cmd_4(self, msg):
+        """聊天"""
+        print struct.unpack(">IIBQ4B%ds"%(len(msg)-struct.calcsize(">IIBQ4B")), msg)
             
     def req_1(self):
         """心跳"""

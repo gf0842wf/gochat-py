@@ -133,7 +133,7 @@ class Connection(object):
         
     def cmd_4(self, msg):
         """聊天"""
-        print struct.unpack(">IIBQ4B%ds"%(len(msg)-struct.calcsize(">IIBQ4B")), msg)
+        print "chat:", struct.unpack(">IIBQ4B%ds"%(len(msg)-struct.calcsize(">IIBQ4B")), msg)
             
     def req_1(self):
         """心跳"""

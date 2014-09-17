@@ -49,9 +49,7 @@ class Connection(object):
         self.connection_made()
         
     def connection_made(self):
-        # 握手准备消息
-        data = "\x00\x00"
-        self.sendall(data)
+        self.req_0()
         
     def close(self):
         if self.jobs: map(lambda g: g.kill, self.jobs)
@@ -108,7 +106,6 @@ class Connection(object):
         print "lost."
 
     def on_data(self, data):
-#         print "got: %s " % repr(data)
         msgtype, msg = data[0], data[1:]
         print "msgtype, msg, crypt_key:", ord(msgtype), repr(msg), self.crypt_key
         cmd = getattr(self, "cmd_%s"%ord(msgtype), None)
@@ -129,11 +126,27 @@ class Connection(object):
         if msg == "\x00":
             print "logined."
             
-        self.req_4(10001, "ooxx")
+#         self.req_4(10001, "ooxx")
+#         self.req_3()
+    
+    def cmd_3(self, msg):
+        """离线消息"""
+        to, = struct.unpack(">I", msg[:4])
+        msg = msg[4:]
+        cells = msg.split("\xef\xff")
+        for cell in cells:
+            print "offchat:", struct.unpack(">IBQ4B%ds"%(len(cell)-struct.calcsize(">IBQ4B")), cell)
+            # from,line,st,flg1,flg2,flg3,flg4,ctx
         
     def cmd_4(self, msg):
         """聊天"""
         print "chat:", struct.unpack(">IIBQ4B%ds"%(len(msg)-struct.calcsize(">IIBQ4B")), msg)
+        # to,from,line,st,flg1,flg2,flg3,flg4,ctx
+        
+    def req_0(self):
+        """握手"""
+        data = "\x00\x00"
+        self.sendall(data)
             
     def req_1(self):
         """心跳"""
@@ -146,6 +159,11 @@ class Connection(object):
         """登陆"""
         data = "\x02" + struct.pack(">I%ds"%len(self.password), self.uid, self.password)
         self.sendall(data)
+    
+    def req_3(self, max_size=0):
+        """离线消息"""
+        data = "\x03" + struct.pack(">I", max_size)
+        self.sendall(data) 
         
     def req_4(self, to, ctx, flg1=0, flg2=0, flg3=0, flg4=0):
         """聊天"""
@@ -155,10 +173,15 @@ class Connection(object):
         data = "\x04" + struct.pack(">IIBQBBBB%ds"%len(ctx), to, src, line, st, flg1, flg2, flg3, flg4, ctx)
         self.sendall(data)
         
+        
 if __name__ == "__main__":
     c = Connection(("127.0.0.1", 7005), 10001, "112358")
 #     c.close()
 #     c.reconnect(10)
 #     c.sendall('\x00\x00\x00\x05hello')
+    gevent.sleep(2)
+    c2 = Connection(("127.0.0.1", 7005), 10002, "112358")
+    gevent.sleep(2)
+    c2.req_4(10001, "我来自10002")
     
     gevent.wait()

@@ -126,22 +126,19 @@ class Connection(object):
         if msg == "\x00":
             print "logined."
             
-#         self.req_4(10001, "ooxx")
-#         self.req_3()
-    
     def cmd_3(self, msg):
         """离线消息"""
         to, = struct.unpack(">I", msg[:4])
         msg = msg[4:]
-        cells = msg.split("\xef\xff")
+        cells = msg.split("\b\r\n")
         for cell in cells:
-            print "offchat:", struct.unpack(">IBQ4B%ds"%(len(cell)-struct.calcsize(">IBQ4B")), cell)
-            # from,line,st,flg1,flg2,flg3,flg4,ctx
+            print "offchat:", struct.unpack(">IBIQ%ds"%(len(cell)-struct.calcsize(">IBIQ")), cell)
+            # from,line,gid,st,ctx
         
     def cmd_4(self, msg):
         """聊天"""
-        print "chat:", struct.unpack(">IIBQ4B%ds"%(len(msg)-struct.calcsize(">IIBQ4B")), msg)
-        # to,from,line,st,flg1,flg2,flg3,flg4,ctx
+        print "chat:", struct.unpack(">IIBIQ%ds"%(len(msg)-struct.calcsize(">IIBQ4B")), msg)
+        # to,from,line,gid,st,ctx
         
     def req_0(self):
         """握手"""
@@ -165,12 +162,12 @@ class Connection(object):
         data = "\x03" + struct.pack(">I", max_size)
         self.sendall(data) 
         
-    def req_4(self, to, ctx, flg1=0, flg2=0, flg3=0, flg4=0):
+    def req_4(self, to, gid=0, ctx=""):
         """聊天"""
         src = self.uid
         line = 1
-        st = int(time.time()*1000)
-        data = "\x04" + struct.pack(">IIBQBBBB%ds"%len(ctx), to, src, line, st, flg1, flg2, flg3, flg4, ctx)
+        st = 0
+        data = "\x04" + struct.pack(">IIBIQ%ds"%len(ctx), to, src, line, gid, st, ctx)
         self.sendall(data)
         
         
@@ -182,6 +179,7 @@ if __name__ == "__main__":
     gevent.sleep(2)
     c2 = Connection(("127.0.0.1", 7005), 10002, "112358")
     gevent.sleep(2)
-    c2.req_4(10001, "我来自10002")
+    c2.req_4(10001, 2, "我来自10002")
+    c2.req_3()
     
     gevent.wait()

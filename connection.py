@@ -110,6 +110,9 @@ class Connection(object):
         print "msgtype, msg, crypt_key:", ord(msgtype), repr(msg), self.crypt_key
         cmd = getattr(self, "cmd_%s"%ord(msgtype), None)
         if cmd: cmd(msg)
+        else:
+            # TODO: 断开连接
+            pass
         
     def cmd_0(self, msg):
         """握手"""
@@ -125,6 +128,8 @@ class Connection(object):
         """登陆"""
         if msg == "\x00":
             print "logined."
+        else:
+            print "login faild."
             
     def cmd_3(self, msg):
         """离线消息"""
@@ -172,14 +177,14 @@ class Connection(object):
         
         
 if __name__ == "__main__":
-    c = Connection(("127.0.0.1", 7005), 10001, "112358")
+    c = Connection(("121.40.104.140", 7005), 10001, "112358")
 #     c.close()
 #     c.reconnect(10)
 #     c.sendall('\x00\x00\x00\x05hello')
     gevent.sleep(2)
-    c2 = Connection(("127.0.0.1", 7005), 10002, "112358")
+    c2 = Connection(("121.40.104.140", 7005), 10002, "112358")
     gevent.sleep(2)
     c2.req_4(10001, 2, "我来自10002")
-    c2.req_3()
+#     c2.req_3()
     
     gevent.wait()

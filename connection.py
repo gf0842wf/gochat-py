@@ -184,7 +184,9 @@ if __name__ == "__main__":
     gevent.sleep(2)
     c2 = Connection(("121.40.104.140", 7005), 10002, "112358")
     gevent.sleep(2)
-    c2.req_4(10001, 2, "我来自10002")
+    while True:
+        c2.req_4(10003, 2, "hello, huange, i come from 10002")
+        gevent.sleep(2)
 #     c2.req_3()
     
     gevent.wait()
